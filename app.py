@@ -31,17 +31,18 @@ def create_app():
     })
 
     # -------- Flask Application Setup --------
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        static_folder=os.path.join(os.path.dirname(__file__), "Frontend", "dist"),  # or "build" for React
+        static_url_path=""
+    )
 
     # -------- CORS Whitelist --------
     CORS(
         app,
         resources={r"/api/*": {
             "origins": [
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:3001"
+                "*"
             ]
         }},
         supports_credentials=True
@@ -77,17 +78,23 @@ def create_app():
 app = create_app()
 
 
-# ✅ Favicon Route (AFTER app exists)
+# ✅ Serve Frontend (React/Vue build)
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend(path):
+    frontend_dir = os.path.join(app.root_path, "Frontend", "dist")  # or "build"
+    if path != "" and os.path.exists(os.path.join(frontend_dir, path)):
+        return send_from_directory(frontend_dir, path)
+    else:
+        return send_from_directory(frontend_dir, "index.html")
+
+
+# ✅ Favicon Route
 @app.route('/favicon.ico')
 def favicon():
     icon_path = os.path.join(app.root_path, 'static')
-    print("[LOG] Favicon requested")  # You'll see this in terminal
-    return send_from_directory(
-        icon_path,
-        'favicon.ico',
-        mimetype='image/vnd.microsoft.icon'
-    )
+    return send_from_directory(icon_path, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8050, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
