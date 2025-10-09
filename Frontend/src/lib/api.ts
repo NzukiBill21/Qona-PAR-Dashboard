@@ -1,35 +1,20 @@
-export type Snapshot = {
-  week: string;
-  totalOutstanding: number;
-  totalGrossProvision: number;
-  overallPAR: number;
-};
+// src/services/api.ts or api.tsx
+// Example for both local (npm run dev) and production (Render)
 
-export type WeeklyPoint = {
-  week: string;
-  outstanding: number;
-  provision: number;
-  par: number;
-};
-
-export type OverallResponse = {
-  snapshot: Snapshot;
-  weekly: WeeklyPoint[];
-  officers: string[];
-};
-
-const API = import.meta.env.VITE_API_BASE as string; 
-// Example: "http://127.0.0.1:8050" (NO trailing /api here)
+const API =
+  import.meta.env.VITE_API_BASE ||
+  (window.location.hostname === "localhost"
+    ? "http://127.0.0.1:8050"
+    : ""); // empty means same origin on Render
 
 // --- Internal fetch wrapper ---
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    headers: { "Accept": "application/json" },
+  const url = `${API}${path}`;
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
   const json = await res.json();
-
-  // Handle both {data: ...} and raw object returns
   return (json.data ?? json) as T;
 }
 
@@ -38,7 +23,9 @@ export async function fetchOverall(): Promise<OverallResponse> {
   return get<OverallResponse>("/api/overall");
 }
 
-export async function fetchOfficer(name: string): Promise<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }> {
+export async function fetchOfficer(
+  name: string
+): Promise<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }> {
   const q = encodeURIComponent(name);
   return get<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }>(
     `/api/officer?name=${q}`
