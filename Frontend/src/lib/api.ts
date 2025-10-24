@@ -1,18 +1,15 @@
-// src/services/api.ts or api.tsx
-// Example for both local (npm run dev) and production (Render)
+// src/services/api.ts  ✅ fixed for your local + Render
 
 const API =
   import.meta.env.VITE_API_BASE ||
   (window.location.hostname === "localhost"
-    ? "http://127.0.0.1:8050"
-    : ""); // empty means same origin on Render
+    ? "http://127.0.0.1:10000"   // ✅ use the port shown in Flask logs
+    : "");                       // empty → same origin on Render
 
 // --- Internal fetch wrapper ---
 async function get<T>(path: string): Promise<T> {
   const url = `${API}${path}`;
-  const res = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
   const json = await res.json();
   return (json.data ?? json) as T;
@@ -25,7 +22,8 @@ export async function fetchOverall(): Promise<OverallResponse> {
 
 export async function fetchOfficer(
   name: string
-): Promise<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }> {
+): Promise<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }>
+{
   const q = encodeURIComponent(name);
   return get<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }>(
     `/api/officer?name=${q}`

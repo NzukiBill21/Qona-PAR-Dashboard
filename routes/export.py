@@ -174,7 +174,7 @@ def export_any():
 
         snap = payload.get("snapshot", {}) or {}
         kpi_rows = [
-            ["Week", str(snap.get("week") or "")],
+            ["Week", str(week or snap.get("week") or "")],
             ["Total Outstanding", snap.get("totalOutstanding", 0)],
             ["Total Gross Provision", snap.get("totalGrossProvision", 0)],
             ["Overall PAR (%)", snap.get("overallPAR", 0)],
@@ -305,7 +305,7 @@ def export_any():
         plt.close(fig)
         buf.seek(0)
 
-        name = f"par_trend_{officer_slug}_{datetime.now().strftime('%Y%m%d')}.png"
+        name = f"par_trend_{officer_slug}_{week or datetime.now().date()}.png"
         return send_file(buf, as_attachment=True, download_name=name, mimetype="image/png")
 
     # ============== PDF (clean, week-aligned) ==============
@@ -322,7 +322,7 @@ def export_any():
         styles = getSampleStyleSheet()
         story = []
 
-        week_label = payload.get("snapshot", {}).get("week", "") or ""
+        week_label = week or payload.get("snapshot", {}).get("week", "") or ""
         story.append(
             Paragraph(
                 f"<b>Portfolio Analytics Report — {officer_disp}</b>"

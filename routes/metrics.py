@@ -9,6 +9,17 @@ from services.data_service import (
 
 bp = Blueprint("metrics", __name__)
 
+def _arg_date_and_mode():
+    """
+    Extract a safe YYYY-MM-DD (local) date and mode.
+    Frontend now always sends a local ISO date (no TZ).
+    """
+    date_str = (request.args.get("date") or request.args.get("week") or "").strip()
+    mode = (request.args.get("mode") or "single").strip().lower()
+    if mode not in ("single", "upto"):
+        mode = "single"
+    return date_str, mode
+
 # ==========================================================
 #                     OVERALL PORTFOLIO
 # ==========================================================
@@ -16,22 +27,19 @@ bp = Blueprint("metrics", __name__)
 def overall():
     """
     Returns overall portfolio analytics data.
-    Supports ?date=YYYY-MM-DD&mode=single|upto (defaults to 'single')
+    Supports ?date=YYYY-MM-DD&mode=single|upto
     """
-    date_str = request.args.get("date")  # e.g. 2025-09-20
-    mode = (request.args.get("mode") or "single").lower().strip()
-
+    date_str, mode = _arg_date_and_mode()
     data = get_overall_and_weeks()
 
     if date_str:
         try:
-            # 🔒 Force exact match so calendar == snapshot
+            # exact date match or upto, handled in data_service
             data = filter_payload_by_week(data, date_str, mode)
         except Exception as e:
-            print(f"Date filter error (overall): {e}")
+            print(f"[overall] date filter error: {e}")
 
     return ok(data)
-
 
 # ==========================================================
 #                     OFFICER METRICS
@@ -43,16 +51,14 @@ def officer():
     Supports ?name=<officer>&date=YYYY-MM-DD&mode=single|upto
     """
     name = (request.args.get("name") or request.args.get("officer") or "").strip()
-    date_str = request.args.get("date")
-    mode = (request.args.get("mode") or "single").lower().strip()
+    date_str, mode = _arg_date_and_mode()
 
     data = get_officer_series(name)
 
     if date_str:
         try:
-            # 🔒 Match same date context as /overall for consistency
             data = filter_payload_by_week(data, date_str, mode)
         except Exception as e:
-            print(f"Date filter error (officer): {e}")
+            print(f"[officer] date filter error: {e}")
 
     return ok(data)

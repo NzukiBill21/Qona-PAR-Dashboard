@@ -102,7 +102,17 @@ const performanceCategories = [
 type WeeklyRow = { week: string; outstanding: number; provision: number; par: number };
 type Snapshot = { week: string | null; totalOutstanding: number; totalGrossProvision: number; overallPAR: number };
 
-const API_BASE = 'http://127.0.0.1:8050/api';
+const API_BASE =
+  window.location.hostname === "localhost" ? "http://127.0.0.1:10000/api"
+    : "/api";
+
+// Helper function to format date as YYYY-MM-DD without timezone conversion
+const formatDateLocal = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export function PARDashboard() {
   // DESIGN STATE (UNCHANGED)
@@ -128,14 +138,14 @@ export function PARDashboard() {
 // Intelligent Refetch Helper (GLOBAL)
 // --------------------
 const fetchWithDateContext = async (officer: string, date: Date) => {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = formatDateLocal(date);
   const base = `${API_BASE}/${officer === 'All Officers' ? 'overall' : 'officer'}`;
   const params = new URLSearchParams();
 
   if (officer !== 'All Officers') params.append('name', officer);
   if (dateStr) params.append('date', dateStr);
 
-  const res = await fetch(`${base}?${params.toString()}`, { credentials: 'include' });
+  const res = await fetch(`${base}?${params.toString()}`, {});
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
 
@@ -293,7 +303,7 @@ const fetchBlobAndDownload = async (url: string, filename: string) => {
       ? `&officer=${encodeURIComponent(selectedOfficer)}`
       : "";
   const weekParam = selectedDate
-    ? `&week=${selectedDate.toISOString().split("T")[0]}`
+    ? `&week=${formatDateLocal(selectedDate)}`
     : "";
 
   const url = `${API_BASE}/export?format=${format}${officerParam}${weekParam}`;
@@ -312,9 +322,7 @@ const fetchBlobAndDownload = async (url: string, filename: string) => {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     const ext = format === "excel" ? "xlsx" : format; // ensure xlsx
-    link.download = `PAR_${officerSlug}_${selectedDate
-      ?.toISOString()
-      .split("T")[0]}.${ext}`;
+    link.download = `PAR_${officerSlug}_${formatDateLocal(selectedDate)}.${ext}`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -582,7 +590,7 @@ const fetchBlobAndDownload = async (url: string, filename: string) => {
                   Qona Financial Services
                 </Badge>
                 <span className="text-sm text-gray-600">
-                  Last updated: {backendSnapshot?.week ?? realKPIData.week} 2024
+                  Selected Week: {formatDateLocal(selectedDate)}
                 </span>
                 {backendError && (
                   <span className="ml-3 text-xs text-red-600">backend offline — using fallback</span>
@@ -685,7 +693,7 @@ const fetchBlobAndDownload = async (url: string, filename: string) => {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          Week: {currentKPI.week}
+                          Week: {formatDateLocal(selectedDate)}
                         </Badge>
                         <div className="flex items-center gap-1 text-green-600">
                           <TrendingDown className="h-3 w-3" />

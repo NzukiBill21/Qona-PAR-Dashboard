@@ -1,3 +1,4 @@
+// Types
 export type Snapshot = {
   week: string;
   totalOutstanding: number;
@@ -18,22 +19,35 @@ export type OverallResponse = {
   officers: string[];
 };
 
-const API = import.meta.env.VITE_API_BASE as string;
+// --- Dynamic API base ---
+const API =
+  import.meta.env.VITE_API_BASE ||
+  (window.location.hostname === "localhost"
+    ? "http://127.0.0.1:10000"
+    : ""); // empty means same origin on Render
 
+// --- Internal fetch wrapper ---
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API}${path}`);
+  const res = await fetch(`${API}${path}`, {
+    headers: { Accept: "application/json" },
+  });
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
   const json = await res.json();
-  return json.data as T;
+  return (json.data ?? json) as T;
 }
 
+// --- API Calls ---
 export async function fetchOverall(): Promise<OverallResponse> {
   return get<OverallResponse>("/api/overall");
 }
 
-export async function fetchOfficer(name: string): Promise<{ name: string; weekly: WeeklyPoint[] }> {
+export async function fetchOfficer(
+  name: string
+): Promise<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }> {
   const q = encodeURIComponent(name);
-  return get<{ name: string; weekly: WeeklyPoint[] }>(`/api/officer?name=${q}`);
+  return get<{ snapshot: Snapshot; weekly: WeeklyPoint[]; officers: string[] }>(
+    `/api/officer?name=${q}`
+  );
 }
 
 export const exportUrls = {
