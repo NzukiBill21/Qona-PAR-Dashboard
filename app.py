@@ -71,7 +71,9 @@ def serve_react(path):
 # ---------- Explicit Static File Routes ----------
 @app.route("/assets/<path:filename>")
 def serve_assets(filename):
-    return send_from_directory(os.path.join(app.root_path, "Frontend", "build", "assets"), filename)
+    assets_dir = os.path.join(app.root_path, "Frontend", "build", "assets")
+    print(f"📁 Serving asset: {filename} from {assets_dir}")
+    return send_from_directory(assets_dir, filename)
 
 @app.route("/favicon.ico")
 def serve_favicon():
