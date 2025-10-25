@@ -1,4 +1,5 @@
 # services/data_service.py
+import os
 from typing import List, Dict
 import pandas as pd
 from datetime import datetime
@@ -19,7 +20,19 @@ from parsing.classification_parser import (
 # ---------- DATA LOADER ----------
 def _load_df() -> pd.DataFrame:
     """TEMP: Always use Excel source for PAR analytics."""
-    return load_excel_raw()
+    try:
+        print(f"📁 Loading Excel from {settings.INPUT_PATH}")
+        df = load_excel_raw()
+        print(f"✅ Excel loaded successfully: {len(df)} rows")
+        return df
+    except FileNotFoundError as e:
+        print(f"❌ Excel file not found: {settings.INPUT_PATH}")
+        print(f"❌ Current directory: {os.getcwd()}")
+        print(f"❌ Files in directory: {os.listdir('.')}")
+        raise
+    except Exception as e:
+        print(f"❌ Excel loading error: {e}")
+        raise
 
 
 

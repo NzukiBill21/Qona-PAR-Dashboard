@@ -85,4 +85,11 @@ if __name__ == "__main__":
     host = "0.0.0.0"
 
     print(f"🚀 Running Flask on {host}:{port}")
-    app.run(host=host, port=port)
+    print(f"📁 INPUT_PATH: {os.environ.get('INPUT_PATH', 'Data.xlsx')}")
+    print(f"📁 Data file exists: {os.path.exists(os.environ.get('INPUT_PATH', 'Data.xlsx'))}")
+    
+    try:
+        app.run(host=host, port=port, debug=False)
+    except Exception as e:
+        print(f"❌ Flask startup error: {e}")
+        raise
