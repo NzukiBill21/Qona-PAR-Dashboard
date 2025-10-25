@@ -68,6 +68,15 @@ def serve_react(path):
         return send_from_directory(react_dir, path)
     return send_from_directory(react_dir, "index.html")
 
+# ---------- Explicit Static File Routes ----------
+@app.route("/assets/<path:filename>")
+def serve_assets(filename):
+    return send_from_directory(os.path.join(app.root_path, "Frontend", "build", "assets"), filename)
+
+@app.route("/favicon.ico")
+def serve_favicon():
+    return send_from_directory(os.path.join(app.root_path, "Frontend", "build"), "favicon.ico")
+
 
 # ---------- Main Entry ----------
 if __name__ == "__main__":
